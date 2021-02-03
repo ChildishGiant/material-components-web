@@ -1,0 +1,258 @@
+// Copyright 2016 Google Inc.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+@use '@material/elevation/elevation-theme';
+@use '@material/animation/functions' as animation-functions;
+@use '@material/feature-targeting/feature-targeting';
+@use '@material/ripple/ripple-theme';
+@use '@material/shape/mixins' as shape-mixins;
+@use '@material/theme/css';
+@use '@material/theme/state';
+@use '@material/theme/theme-color';
+@use '@material/theme/theme';
+@use 'sass:math';
+@use 'sass:list';
+@use 'sass:map';
+
+$height: 56px !default;
+$mini-height: 40px !default;
+$shape-radius: 50% !default;
+$ripple-target: '.mdc-fab__ripple';
+
+@mixin theme($query: feature-targeting.all()) {
+  @include container-color(secondary, $query: $query);
+  @include icon-size(24px, $query: $query);
+  @include ink-color(on-secondary, $query: $query);
+  @include shape-radius($shape-radius, $query: $query);
+  @include elevation-theme.elevation(6, $query: $query);
+}
+
+@mixin ripple-color($color, $opacity-map: (), $query: feature-targeting.all()) {
+  @include ripple-theme.states(
+    $color,
+    $opacity-map: $opacity-map,
+    $query: $query,
+    $ripple-target: $ripple-target
+  );
+}
+
+@mixin accessible($container-color, $query: feature-targeting.all()) {
+  @include container-color($container-color, $query: $query);
+
+  $fill-tone: theme-color.tone($container-color);
+
+  @if ($fill-tone == 'dark') {
+    @include ink-color(text-primary-on-dark, $query: $query);
+    @include ripple-theme.states(
+      text-primary-on-dark,
+      $query: $query,
+      $ripple-target: $ripple-target
+    );
+  } @else {
+    @include ink-color(text-primary-on-light, $query: $query);
+    @include ripple-theme.states(
+      text-primary-on-light,
+      $query: $query,
+      $ripple-target: $ripple-target
+    );
+  }
+}
+
+@mixin container-color($color, $query: feature-targeting.all()) {
+  $feat-color: feature-targeting.create-target($query, color);
+
+  @include feature-targeting.targets($feat-color) {
+    @include theme.property(background-color, $color);
+  }
+}
+
+@mixin icon-size($width, $height: $width, $query: feature-targeting.all()) {
+  $feat-structure: feature-targeting.create-target($query, structure);
+
+  .mdc-fab__icon {
+    @include feature-targeting.targets($feat-structure) {
+      width: $width;
+      height: $height;
+      font-size: $height;
+    }
+  }
+}
+
+@mixin ink-color($color, $query: feature-targeting.all()) {
+  $feat-color: feature-targeting.create-target($query, color);
+
+  @include feature-targeting.targets($feat-color) {
+    @include theme.property(color, $color);
+  }
+}
+
+@mixin label-color($color) {
+  .mdc-fab__label {
+    @include theme.property(color, $color);
+  }
+}
+
+@mixin container-height($height) {
+  height: $height;
+}
+
+@mixin container-width($width) {
+  width: $width;
+}
+
+@mixin icon-color($color-or-map) {
+  &:not(:disabled) {
+    @include _set-icon-color(state.get-default-state($color-or-map));
+
+    &:hover {
+      @include _set-icon-color(state.get-hover-state($color-or-map));
+    }
+
+    &:focus {
+      @include _set-icon-color(state.get-focus-state($color-or-map));
+    }
+
+    &:active {
+      @include _set-icon-color(state.get-pressed-state($color-or-map));
+    }
+  }
+
+  &:disabled {
+    @include _set-icon-color(state.get-disabled-state($color-or-map));
+  }
+}
+
+@mixin _set-icon-color($color) {
+  .mdc-fab__icon {
+    @include theme.property(color, $color);
+  }
+}
+
+@mixin container-elevation($elevation-or-map) {
+  &:not(:disabled) {
+    @include _set-container-elevation(
+      state.get-default-state($elevation-or-map)
+    );
+
+    &:hover {
+      @include _set-container-elevation(
+        state.get-hover-state($elevation-or-map)
+      );
+    }
+
+    &:focus {
+      @include _set-container-elevation(
+        state.get-focus-state($elevation-or-map)
+      );
+    }
+
+    &:active {
+      @include _set-container-elevation(
+        state.get-pressed-state($elevation-or-map)
+      );
+    }
+  }
+
+  &:disabled {
+    @include _set-container-elevation(
+      state.get-disabled-state($elevation-or-map)
+    );
+  }
+}
+
+@mixin _set-container-elevation($elevation) {
+  @if $elevation and map.get($elevation, box-shadow) {
+    @include elevation-theme.shadow(map.get($elevation, box-shadow));
+  }
+
+  @if $elevation and map.get($elevation, overlay-opacity) {
+    @include elevation-theme.overlay-opacity(
+      map.get($elevation, overlay-opacity)
+    );
+  }
+}
+
+///
+/// Sets outline width only when button is in focus. Also sets padding to
+/// include outline on focus (Helps prevent size jump on focus).
+/// @param {Number} $width - Outline (border) width.
+/// @param {Number|List} $padding [0] - Padding when button is not in focus.
+///     Offsets padding based on given outline width on focus.
+///
+@mixin focus-outline-width(
+  $width,
+  $padding: 0,
+  $query: feature-targeting.all()
+) {
+  $feat-structure: feature-targeting.create-target($query, structure);
+
+  $padding: css.unpack-value($padding);
+
+  // Padding should include outline width which will be set on focus.
+  padding: math.max(list.nth($padding, 1), $width)
+    math.max(list.nth($padding, 2), $width)
+    math.max(list.nth($padding, 3), $width)
+    math.max(list.nth($padding, 4), $width);
+
+  &:focus {
+    @include feature-targeting.targets($feat-structure) {
+      border-style: solid;
+      border-width: $width;
+
+      // Offset border width from padding.
+      padding: math.abs(list.nth($padding, 1) - $width)
+        math.abs(list.nth($padding, 2) - $width)
+        math.abs(list.nth($padding, 3) - $width)
+        math.abs(list.nth($padding, 4) - $width);
+    }
+  }
+}
+
+///
+/// Sets outline color only when button is in focus. Use `focus-outline-width()`
+/// to set appropriate outline width.
+/// @param {Color} $color - Outline (border) color.
+///
+@mixin focus-outline-color($color, $query: feature-targeting.all()) {
+  $feat-color: feature-targeting.create-target($query, color);
+
+  &:focus {
+    @include feature-targeting.targets($feat-color) {
+      @include theme.property(border-color, $color);
+    }
+  }
+}
+
+@mixin shape-radius(
+  $radius,
+  $rtl-reflexive: false,
+  $query: feature-targeting.all()
+) {
+  &:not(.mdc-fab--extended) {
+    // Do not specify $component-height for shape radius. FABs are circular,
+    // which means they can use percentage border radius without resolving to
+    // a component height.
+    @include shape-mixins.radius($radius, $rtl-reflexive, $query: $query);
+
+    #{$ripple-target} {
+      @include shape-mixins.radius($radius, $rtl-reflexive, $query: $query);
+    }
+  }
+}

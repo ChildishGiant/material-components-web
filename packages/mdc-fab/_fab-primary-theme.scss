@@ -1,0 +1,90 @@
+// Copyright 2021 Google Inc.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
+@use '@material/elevation/elevation-theme';
+@use '@material/ripple/ripple-theme';
+@use '@material/theme/theme-color';
+@use '@material/theme/theme';
+@use './fab-theme';
+@use 'sass:map';
+
+$primary-light-theme: (
+  container-color: theme-color.$surface,
+  container-elevation: elevation-theme.get-elevation(3),
+  container-height: 56px,
+  container-shape: 50%,
+  container-width: 56px,
+  focus-container-elevation: null,
+  focus-icon-color: null,
+  focus-state-layer-color: theme-color.$primary,
+  focus-state-layer-opacity: null,
+  hover-container-elevation: null,
+  hover-icon-color: null,
+  hover-state-layer-color: theme-color.$primary,
+  hover-state-layer-opacity: null,
+  icon-color: theme-color.$primary,
+  icon-size: 24px,
+  pressed-container-elevation: null,
+  pressed-icon-color: null,
+  pressed-ripple-color: theme-color.$primary,
+  pressed-ripple-opacity: null,
+);
+
+@mixin theme($theme) {
+  @include theme.validate-keys($primary-light-theme, $theme);
+  @include fab-theme.container-color(map.get($theme, container-color));
+  @include fab-theme.container-elevation(
+    (
+      default: map.get($theme, container-elevation),
+      hover: map.get($theme, hover-container-elevation),
+      focus: map.get($theme, focus-container-elevation),
+      pressed: map.get($theme, pressed-container-elevation),
+    )
+  );
+  @include fab-theme.container-height(map.get($theme, container-height));
+  @include fab-theme.container-width(map.get($theme, container-width));
+  @include fab-theme.icon-size(map.get($theme, icon-size));
+  @include fab-theme.icon-color(
+    (
+      default: map.get($theme, icon-color),
+      hover: map.get($theme, hover-icon-color),
+      focus: map.get($theme, focus-icon-color),
+      pressed: map.get($theme, pressed-icon-color),
+    )
+  );
+
+  $shape-radius: map.get($theme, container-shape);
+  @if $shape-radius {
+    @include fab-theme.shape-radius($shape-radius);
+  }
+
+  $opacity-map: (
+    hover: map.get($theme, hover-state-layer-opacity),
+    focus: map.get($theme, focus-state-layer-opacity),
+    press: map.get($theme, pressed-ripple-opacity),
+  );
+  $hover-state-layer-color: map.get($theme, hover-state-layer-color);
+  @if $hover-state-layer-color {
+    @include fab-theme.ripple-color(
+      $hover-state-layer-color,
+      $opacity-map: $opacity-map
+    );
+  }
+}
